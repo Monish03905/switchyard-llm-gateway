@@ -1,0 +1,43 @@
+# Render blueprint. Keep this file at the repository root: the New > Blueprint
+# flow discovers render.yaml there, then builds the multi-stage Dockerfile,
+# mounts a 1 GB disk, and starts the yard.
+# Keys are marked sync:false so they are entered in the dashboard, never here.
+services:
+  - type: web
+    name: switchyard
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    disk:
+      name: switchyard-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SERVE_FRONTEND
+        value: "true"
+      - key: PROVIDER_MODE
+        value: auto
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:////data/switchyard.db
+      - key: LEDGER_KEY
+        generateValue: true
+      - key: GATEWAY_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DAILY_BUDGET_USD
+        value: "2"
+      - key: RATE_LIMIT_RPM
+        value: "60"
+      - key: STORE_PROMPTS
+        value: "false"
