@@ -80,24 +80,19 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
   clearTimeout(timeout);
 
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("text/html")) {
-    throw new ApiError(
-      API_BASE
-        ? `The API at ${API_BASE} returned a web page instead of JSON. Check that the backend is running.`
-        : "This cockpit is not connected to the API. Set VITE_API_BASE_URL to the FastAPI origin and redeploy.",
-      response.status,
-      "api_not_connected",
-    );
-  }
-
   let payload: unknown = null;
   const text = await response.text();
   if (text) {
     try {
       payload = JSON.parse(text);
     } catch {
-      payload = text;
+      throw new ApiError(
+        API_BASE
+          ? `The API at ${API_BASE} returned a non-JSON response (${response.status}). Check the backend URL and that the service is running.`
+          : "This cockpit is not connected to the API. Set VITE_API_BASE_URL to the FastAPI origin and redeploy.",
+        response.status,
+        "api_not_connected",
+      );
     }
   }
 
