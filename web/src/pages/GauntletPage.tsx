@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { api, errorMessage, isUnauthorized } from "../lib/api";
+import { api, apiUrl, errorMessage, isUnauthorized } from "../lib/api";
 import { ago, dateShort, grams, latency, money, pct, pctValue, signed } from "../lib/format";
 import { useFetch } from "../lib/hooks";
 import type {
@@ -148,11 +148,11 @@ export function GauntletPage() {
         actions={
           <>
             {selectedId ? (
-              <a className="btn" href={`/api/evals/batches/${selectedId}/results.csv`}>
+              <a className="btn" href={apiUrl(`/api/evals/batches/${selectedId}/results.csv`)}>
                 Export CSV <ArrowGlyph />
               </a>
             ) : (
-              <a className="btn" href="/api/evals/tasks">
+              <a className="btn" href={apiUrl("/api/evals/tasks")}>
                 Task set (JSON) <ArrowGlyph />
               </a>
             )}

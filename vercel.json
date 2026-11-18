@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "installCommand": "npm --prefix web ci",
+  "buildCommand": "npm --prefix web run build",
+  "outputDirectory": "web/dist",
+  "rewrites": [
+    {
+      "source": "/((?!api/|v1/|health|metrics/|docs|openapi\\.json|assets/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

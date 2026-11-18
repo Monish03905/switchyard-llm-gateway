@@ -1,7 +1,9 @@
 # Deployment
 
-Three ways to run the yard, cheapest first. All of them work with **no provider
+Several ways to run the yard, cheapest first. All of them work with **no provider
 key**: the simulator takes over and every number on screen is labelled simulated.
+Vercel can host the static cockpit, but the FastAPI process needs a persistent
+Docker host (Docker, Render, Fly.io, Railway, or similar).
 
 ## 1. Local, zero setup
 
@@ -86,7 +88,28 @@ Any Docker host works the same way (Fly.io, Railway, ECS). The only hard
 requirements are a writable path for SQLite (or a Postgres URL), port `8000`
 (or `PORT`), and `/health` for the probe.
 
-## 5. Going live with a real provider
+## 5. Vercel frontend + Render API
+
+Vercel serves static files; it does not run this FastAPI process. The cockpit
+calls `/api`, `/v1`, and `/health`, so those paths must reach a running backend.
+
+1. Deploy the API first (section 4) and open
+   `https://<service>.onrender.com/health`. A Render page saying
+   "suspended by its owner" means the service is paused; resume it in the
+   Render dashboard.
+2. In Vercel → Project → Settings → Environment Variables, add
+   `VITE_API_BASE_URL=https://<service>.onrender.com` for Production and
+   Preview. Vite reads it at build time, so redeploy after adding or changing it.
+3. Leave `CORS_ORIGINS=*` (the default), or list the exact Vercel origin.
+4. The repository's `vercel.json` rewrites non-API paths to `index.html`. If
+   the Vercel project root is `web`, the `web/vercel.json` copy is used instead.
+   Without that fallback, refreshing `/gauntlet`, `/ledger`, or `/notes` returns
+   Vercel's 404 page.
+
+Local development still works without the variable: requests use the Vite dev
+proxy. Provider keys belong on the backend, never in Vercel.
+
+## 6. Going live with a real provider
 
 1. Put `GROQ_API_KEY=...` (or `OPENAI_API_KEY=...`) in `.env`. Never commit it;
    `.env` is gitignored, and `.env.example` contains only placeholders.
@@ -100,7 +123,7 @@ requirements are a writable path for SQLite (or a Postgres URL), port `8000`
    test: if the pass-rate gap between thrift and prime is tiny, your tasks are
    too easy to justify a router.
 
-## 6. Configuration that matters
+## 7. Configuration that matters
 
 | Variable | Default | Notes |
 |---|---|---|
@@ -119,7 +142,7 @@ requirements are a writable path for SQLite (or a Postgres URL), port `8000`
 
 Full list with comments: [`.env.example`](../.env.example).
 
-## 7. Scaling honestly
+## 8. Scaling honestly
 
 The current design is a **single-instance appliance**, and that is fine for the
 job it does (a portfolio-grade gateway with an audit trail). To scale out:
@@ -136,7 +159,7 @@ job it does (a portfolio-grade gateway with an audit trail). To scale out:
 Until then, run exactly one replica. Multiple workers would produce duplicate
 sequence chains and inconsistent budget views.
 
-## 8. Operations runbook
+## 9. Operations runbook
 
 ```bash
 # Is the ledger intact?
@@ -163,7 +186,7 @@ curl -s -X POST localhost:8000/api/admin/breakers/reset -H 'X-Admin-Token: ...'
 * **429s**: raise `RATE_LIMIT_RPM` or put the app behind a proxy that forwards
   `X-Forwarded-For` (used for the hashed client identity).
 
-## 9. CI
+## 10. CI
 
 `.github/workflows/ci.yml` runs three jobs on every push and PR:
 

@@ -1,5 +1,12 @@
 const ADMIN_STORAGE = "switchyard-admin-token";
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").trim().replace(/\/+$/, "");
+
+export function apiUrl(path: string): string {
+  if (!API_BASE || /^https?:\/\//i.test(path)) return path;
+  return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export class ApiError extends Error {
   status: number;
   code: string | number | undefined;
@@ -52,7 +59,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(apiUrl(path), {
       method: options.method ?? "GET",
       headers,
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
@@ -63,9 +70,26 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new ApiError("The yard did not answer in time. Check the server log.", 0, "timeout");
     }
-    throw new ApiError("Cannot reach the yard. Is the API running on this origin?", 0, "network");
+    throw new ApiError(
+      API_BASE
+        ? `Cannot reach the API at ${API_BASE}. Is the backend running?`
+        : "Cannot reach the yard. Is the API running on this origin?",
+      0,
+      "network",
+    );
   }
   clearTimeout(timeout);
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("text/html")) {
+    throw new ApiError(
+      API_BASE
+        ? `The API at ${API_BASE} returned a web page instead of JSON. Check that the backend is running.`
+        : "This cockpit is not connected to the API. Set VITE_API_BASE_URL to the FastAPI origin and redeploy.",
+      response.status,
+      "api_not_connected",
+    );
+  }
 
   let payload: unknown = null;
   const text = await response.text();

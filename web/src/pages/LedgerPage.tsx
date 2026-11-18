@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useDeferredValueCompat, useFetch } from "../lib/hooks";
+import { apiUrl } from "../lib/api";
 import type { ChainState, RequestPage } from "../lib/types";
 import { clock, dateShort, latency, money, pct, shortHash, titleCase } from "../lib/format";
 import { RequestDrawer } from "../components/RequestDrawer";
@@ -63,10 +64,10 @@ export function LedgerPage() {
         lede="Prompts, routes, prices and outcomes are written as an HMAC hash chain. Verify the whole ledger in one click, or pull the raw CSV for an audit folder."
         actions={
           <>
-            <a className="btn" href={`/api/requests/export.csv?${params.toString()}`}>
+            <a className="btn" href={apiUrl(`/api/requests/export.csv?${params.toString()}`)}>
               Export filtered <ArrowGlyph />
             </a>
-            <a className="btn" href="/api/ledger/export.csv">
+            <a className="btn" href={apiUrl("/api/ledger/export.csv")}>
               Full chain CSV
             </a>
           </>

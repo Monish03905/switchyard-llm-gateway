@@ -668,6 +668,9 @@ After `pytest`, the gate, and the smoke script, this is the fast visual pass:
 | `docker build` fails immediately | Docker daemon is not running | Start Docker Desktop; `docker compose config` should also parse |
 | Tests fail on a non-CI Python | Version outside 3.11–3.14 | Use Python 3.12 to match CI |
 | Dashboard is empty | Fresh database | Queue a gauntlet and send a request; there is no hidden seed |
+| `This cockpit is not connected to the API` | Static host (Vercel) has no FastAPI behind it | Deploy the API on Render/Docker, set `VITE_API_BASE_URL` to its origin in Vercel, then redeploy |
+| `/gauntlet` returns 404 on a static host | Missing SPA fallback | Deploy the included `vercel.json` (or `web/vercel.json` when the Vercel root is `web`) |
+| Render `/health` says `suspend-by-user` | The Render service is suspended | Resume the service in the Render dashboard, then recheck `/health` |
 
 ---
 
@@ -677,6 +680,10 @@ After `pytest`, the gate, and the smoke script, this is the fast visual pass:
 * **Compose**: app + Postgres 16 + Redis 7, with health gates and a named volume.
 * **Render**: `render.yaml` at the repo root (Docker, `/data` disk, `/health`
   probe, secrets marked `sync:false`).
+* **Vercel (frontend only)**: Vercel serves the static cockpit; it cannot run
+  this FastAPI process. Deploy the API on Render/Docker first, then set
+  `VITE_API_BASE_URL` to that origin in Vercel and redeploy. `vercel.json` adds
+  SPA fallback so `/gauntlet`, `/ledger`, and `/notes` survive a refresh.
 
 Full walkthrough, environment reference, scaling limits, and an ops runbook:
 [docs/deployment.md](docs/deployment.md). Render config is honest about the
