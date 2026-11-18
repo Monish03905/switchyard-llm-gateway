@@ -80,6 +80,19 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   }
   clearTimeout(timeout);
 
+  const staticHostMiss =
+    !API_BASE &&
+    response.status === 404 &&
+    (response.headers.get("x-vercel-error") === "NOT_FOUND" ||
+      /vercel/i.test(response.headers.get("server") ?? ""));
+  if (staticHostMiss) {
+    throw new ApiError(
+      "This cockpit is not connected to the API. Set VITE_API_BASE_URL to the FastAPI origin and redeploy.",
+      response.status,
+      "api_not_connected",
+    );
+  }
+
   let payload: unknown = null;
   const text = await response.text();
   if (text) {
